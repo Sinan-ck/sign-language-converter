@@ -1,21 +1,24 @@
+import { useLocation } from 'react-router-dom'
+
 function SignPlayerPage() {
-  const signs = ['Hello', 'My', 'Name', 'Is', 'Sign', 'Language']
+  const location = useLocation()
+  const signs = location.state?.signs || []
+  const transcript = location.state?.transcript || ''
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f4ff', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem' }}>
       <h2 style={{ color: '#6C63FF', marginBottom: '0.5rem' }}>Sign Language Player</h2>
-      <p style={{ color: '#888', marginBottom: '2rem' }}>Showing signs word by word</p>
+      <p style={{ color: '#888', marginBottom: '1rem' }}>Transcript: {transcript}</p>
 
-      {/* Avatar Box */}
       <div style={{ width: '300px', height: '300px', background: '#fff', borderRadius: '20px', border: '2px solid #6C63FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem', fontSize: '6rem' }}>
-        👋
+        {signs[0]?.sign || '👋'}
       </div>
 
-      {/* Word Cards */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', maxWidth: '600px' }}>
-        {signs.map((word, i) => (
-          <div key={i} style={{ background: '#fff', border: '1.5px solid #6C63FF', borderRadius: '10px', padding: '0.5rem 1.2rem', color: '#6C63FF', fontWeight: '600', fontSize: '1rem' }}>
-            {word}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center', maxWidth: '700px' }}>
+        {signs.map((item, i) => (
+          <div key={i} style={{ background: '#fff', border: '1.5px solid #6C63FF', borderRadius: '10px', padding: '0.5rem 1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '1.5rem' }}>{item.sign}</div>
+            <div style={{ color: '#6C63FF', fontSize: '0.85rem', fontWeight: '600' }}>{item.word}</div>
           </div>
         ))}
       </div>

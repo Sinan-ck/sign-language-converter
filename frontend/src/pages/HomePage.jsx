@@ -18,14 +18,26 @@ function HomePage() {
   const handleSubmit = async () => {
     if (!file && !youtubeUrl) return alert('Please upload a video or paste a YouTube link')
 
-    if (file) {
-      const formData = new FormData()
-      formData.append('file', file)
-      await axios.post('http://localhost:8000/upload', formData)
-    } else {
-      await axios.post('http://localhost:8000/youtube', { url: youtubeUrl })
+    try {
+      let signs = []
+      let transcript = ''
+
+      if (file) {
+        const formData = new FormData()
+        formData.append('file', file)
+        alert('Uploading... please wait 1-2 minutes')
+        const res = await axios.post('http://localhost:8000/upload', formData)
+        signs = res.data.signs
+        transcript = res.data.transcript
+      } else {
+        const res = await axios.post('http://localhost:8000/youtube', { url: youtubeUrl })
+        signs = res.data.signs
+        transcript = res.data.transcript
+      }
+      navigate('/player', { state: { signs, transcript } })
+    } catch (err) {
+      alert('Error: ' + err.message)
     }
-    navigate('/processing')
   }
 
   return (
