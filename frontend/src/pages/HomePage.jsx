@@ -6,6 +6,8 @@ function HomePage() {
   const [youtubeUrl, setYoutubeUrl] = useState('')
   const [file, setFile] = useState(null)
   const [dragging, setDragging] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
   const navigate = useNavigate()
 
   const handleDrop = (e) => {
@@ -18,18 +20,20 @@ function HomePage() {
   const handleSubmit = async () => {
     if (!file && !youtubeUrl) return alert('Please upload a video or paste a YouTube link')
 
+    setIsProcessing(true)
     try {
       let signs = []
       let transcript = ''
 
       if (file) {
+        setStatusMessage('Uploading and transcribing your video... this can take 1-2 minutes')
         const formData = new FormData()
         formData.append('file', file)
-        alert('Uploading... please wait 1-2 minutes')
         const res = await axios.post('http://localhost:8000/upload', formData)
         signs = res.data.signs
         transcript = res.data.transcript
       } else {
+        setStatusMessage('Downloading and transcribing the YouTube video... this can take 1-2 minutes')
         const res = await axios.post('http://localhost:8000/youtube', { url: youtubeUrl })
         signs = res.data.signs
         transcript = res.data.transcript
@@ -37,6 +41,9 @@ function HomePage() {
       navigate('/player', { state: { signs, transcript } })
     } catch (err) {
       alert('Error: ' + err.message)
+    } finally {
+      setIsProcessing(false)
+      setStatusMessage('')
     }
   }
 
@@ -45,48 +52,67 @@ function HomePage() {
       <h1 style={{ fontSize: '2.2rem', color: '#6C63FF', marginBottom: '0.5rem' }}>Sign Language Converter</h1>
       <p style={{ color: '#666', marginBottom: '2rem' }}>Upload a video or paste a YouTube link to convert to sign language</p>
 
-      {/* Drag & Drop Upload */}
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onClick={() => document.getElementById('fileInput').click()}
-        style={{
-          width: '100%', maxWidth: '500px', border: `2px dashed ${dragging ? '#6C63FF' : '#bbb'}`,
-          borderRadius: '16px', padding: '3rem', textAlign: 'center',
-          background: dragging ? '#eeedfe' : '#fff', cursor: 'pointer', marginBottom: '1.5rem'
-        }}
-      >
-        <p style={{ fontSize: '2rem', margin: 0 }}>📁</p>
-        <p style={{ color: '#555', margin: '0.5rem 0 0' }}>
-          {file ? `✅ ${file.name}` : 'Drag & drop a video file here or click to browse'}
-        </p>
-        <input id="fileInput" type="file" accept="video/*" style={{ display: 'none' }}
-          onChange={(e) => setFile(e.target.files[0])} />
-      </div>
+      {isProcessing ? (
+        <div style={{ width: '100%', maxWidth: '500px', textAlign: 'center', padding: '3rem 1rem' }}>
+          <div style={{
+            width: '48px', height: '48px', margin: '0 auto 1.5rem',
+            border: '4px solid #e0defe', borderTop: '4px solid #6C63FF',
+            borderRadius: '50%', animation: 'spin 1s linear infinite'
+          }} />
+          <p style={{ color: '#6C63FF', fontWeight: '600', fontSize: '1rem' }}>{statusMessage}</p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      ) : (
+        <>
+          {/* Drag & Drop Upload */}
+          <div
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+            onDragLeave={() => setDragging(false)}
+            onClick={() => document.getElementById('fileInput').click()}
+            style={{
+              width: '100%', maxWidth: '500px', border: `2px dashed ${dragging ? '#6C63FF' : '#bbb'}`,
+              borderRadius: '16px', padding: '3rem', textAlign: 'center',
+              background: dragging ? '#eeedfe' : '#fff', cursor: 'pointer', marginBottom: '1.5rem'
+            }}
+          >
+            <p style={{ fontSize: '2rem', margin: 0 }}>📁</p>
+            <p style={{ color: '#555', margin: '0.5rem 0 0' }}>
+              {file ? `✅ ${file.name}` : 'Drag & drop a video file here or click to browse'}
+            </p>
+            <input id="fileInput" type="file" accept="video/*" style={{ display: 'none' }}
+              onChange={(e) => setFile(e.target.files[0])} />
+          </div>
 
-      {/* YouTube Input */}
-      <p style={{ color: '#999', marginBottom: '0.75rem' }}>— or paste a YouTube link —</p>
-      <input
-        type="text"
-        placeholder="https://www.youtube.com/watch?v=..."
-        value={youtubeUrl}
-        onChange={(e) => setYoutubeUrl(e.target.value)}
-        style={{
-          width: '100%', maxWidth: '500px', padding: '0.75rem 1rem',
-          borderRadius: '10px', border: '1.5px solid #ddd', fontSize: '1rem',
-          marginBottom: '1.5rem', outline: 'none'
-        }}
-      />
+          {/* YouTube Input */}
+          <p style={{ color: '#999', marginBottom: '0.75rem' }}>— or paste a YouTube link —</p>
+          <input
+            type="text"
+            placeholder="https://www.youtube.com/watch?v=..."
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+            style={{
+              width: '100%', maxWidth: '500px', padding: '0.75rem 1rem',
+              borderRadius: '10px', border: '1.5px solid #ddd', fontSize: '1rem',
+              marginBottom: '1.5rem', outline: 'none'
+            }}
+          />
 
-      {/* Submit Button */}
-      <button onClick={handleSubmit} style={{
-        background: '#6C63FF', color: '#fff', border: 'none',
-        padding: '0.85rem 2.5rem', borderRadius: '10px', fontSize: '1rem',
-        cursor: 'pointer', fontWeight: '600'
-      }}>
-        Convert to Sign Language →
-      </button>
+          {/* Submit Button */}
+          <button onClick={handleSubmit} style={{
+            background: '#6C63FF', color: '#fff', border: 'none',
+            padding: '0.85rem 2.5rem', borderRadius: '10px', fontSize: '1rem',
+            cursor: 'pointer', fontWeight: '600'
+          }}>
+            Convert to Sign Language →
+          </button>
+        </>
+      )}
     </div>
   )
 }
